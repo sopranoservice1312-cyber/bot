@@ -42,7 +42,7 @@ import uvicorn
 CONFIG_FILE = "forwarder_config.json"
 LOG_FILE = "forwarder_forward.log"
 BOT_TOKEN_FILE = "forwarder_bot_token.txt"
-PANEL_PORT = 8010
+PANEL_PORT = 8010  # fallback port
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
@@ -173,7 +173,13 @@ async def main():
     loop = asyncio.get_event_loop()
     loop.call_later(1, open_panel_browser)
     runner = loop.create_task(bot_runner())
-    config = uvicorn.Config(app, host="127.0.0.1", port=PANEL_PORT, log_level="info")
+    # ВАЖНО: Используем host="0.0.0.0" и порт из окружения для Railway
+    config = uvicorn.Config(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", PANEL_PORT)),
+        log_level="info"
+    )
     server = uvicorn.Server(config)
     runner2 = loop.create_task(server.serve())
     await asyncio.gather(runner, runner2)
