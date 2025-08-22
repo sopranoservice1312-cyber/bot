@@ -137,6 +137,17 @@ TOKEN = load_token()
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
+# Автоматически пишет Chat ID, когда добавляют в группу
+@dp.message(F.new_chat_members)
+async def greet_and_show_id(message: types.Message):
+    me = await bot.get_me()
+    for member in message.new_chat_members:
+        if member.id == me.id:  # если это бот
+            await message.answer(
+                f"✅ Меня добавили в этот чат!\n"
+                f"ID чата: <code>{message.chat.id}</code>"
+            )
+
 @dp.message(F.chat.type.in_({"group", "supergroup", "private"}))
 async def debug_and_forward(message: types.Message):
     print(f"[DEBUG] chat.id={message.chat.id} from={getattr(message.from_user,'id',None)} text={message.text}")
@@ -193,3 +204,4 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
