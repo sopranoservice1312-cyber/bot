@@ -208,6 +208,7 @@ async def main():
     await asyncio.gather(runner, runner2)
 
 async def bot_runner():
+    await bot.delete_webhook(drop_pending_updates=True)  # <-- вот это фикс конфликта
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
