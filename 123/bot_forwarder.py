@@ -1,33 +1,5 @@
-import sys
-import subprocess
 import os
-import pkg_resources
-
-REQUIRED_PACKAGES = {
-    "aiogram": ">=3.0.0,<4.0.0",
-    "fastapi": "",
-    "uvicorn": "",
-    "jinja2": "",
-    "python-multipart": ""
-}
-
-def ensure_package(package, version_spec):
-    try:
-        pkg_resources.require(f"{package}{version_spec}")
-    except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict):
-        print(f"Устанавливаю {package}{version_spec} ...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", f"{package}{version_spec}"])
-
-def ensure_all_packages():
-    for pkg, ver in REQUIRED_PACKAGES.items():
-        ensure_package(pkg, ver)
-
-ensure_all_packages()
-print("Все зависимости установлены. Запускаю бота...")
-
-import asyncio
 import json
-import webbrowser
 from datetime import datetime
 
 from aiogram import Bot, Dispatcher, types, F
@@ -38,6 +10,9 @@ from fastapi import FastAPI, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 import uvicorn
+import asyncio
+
+# ------------------ Конфиги ------------------
 
 CONFIG_FILE = "forwarder_config.json"
 LOG_FILE = "forwarder_forward.log"
@@ -62,8 +37,7 @@ def load_token():
     if not os.path.exists(BOT_TOKEN_FILE):
         with open(BOT_TOKEN_FILE, "w", encoding="utf-8") as f:
             f.write("PASTE_YOUR_BOT_TOKEN_HERE")
-        print("Вставьте токен Telegram-бота в файл forwarder_bot_token.txt и перезапустите!")
-        input("Нажмите Enter для выхода...")
+        print("⚠️ Вставьте токен Telegram-бота в файл forwarder_bot_token.txt и перезапустите!")
         exit(1)
     with open(BOT_TOKEN_FILE, encoding="utf-8") as f:
         return f.read().strip()
@@ -87,6 +61,8 @@ def load_logs(limit=100):
     with open(LOG_FILE, encoding="utf-8") as f:
         lines = [json.loads(line) for line in f if line.strip()]
     return lines[-limit:][::-1]
+
+# ------------------ FastAPI панель ------------------
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates_forwarder")
@@ -133,16 +109,17 @@ async def delete_command(command: str = Form(...)):
         save_config(cfg)
     return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
+# ------------------ Telegram Bot ------------------
+
 TOKEN = load_token()
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
-# Автоматически пишет Chat ID, когда добавляют в группу
 @dp.message(F.new_chat_members)
 async def greet_and_show_id(message: types.Message):
     me = await bot.get_me()
     for member in message.new_chat_members:
-        if member.id == me.id:  # если это бот
+        if member.id == me.id:
             await message.answer(
                 f"✅ Меня добавили в этот чат!\n"
                 f"ID чата: <code>{message.chat.id}</code>"
@@ -173,18 +150,28 @@ async def debug_and_forward(message: types.Message):
                 log_forward(command, message.chat.id, text, tgt, "fail", str(e))
                 await message.reply(f"Ошибка пересылки: {e}", reply=False)
 
-def open_panel_browser():
-    url = f"http://127.0.0.1:{PANEL_PORT}/"
-    try:
-        webbrowser.open_new(url)
-    except Exception as e:
-        print(f"Ошибка открытия браузера: {e}")
+# ------------------ Webhook ------------------
+
+@app.post("/webhook")
+async def telegram_webhook(request: Request):
+    data = await request.json()
+    update = types.Update(**data)
+    await dp.feed_update(bot, update)
+    return {"ok": True}
+
+# ------------------ Main ------------------
 
 async def main():
-    loop = asyncio.get_event_loop()
-    loop.call_later(1, open_panel_browser)
-    runner = loop.create_task(bot_runner())
-    # ВАЖНО: Используем host="0.0.0.0" и порт из окружения для Railway
+    # Автоматическая установка webhook
+    railway_url = os.environ.get("RAILWAY_URL")
+    if railway_url:
+        webhook_url = f"{railway_url.rstrip('/')}/webhook"
+        await bot.set_webhook(webhook_url, drop_pending_updates=True)
+        print(f"✅ Webhook установлен: {webhook_url}")
+    else:
+        print("⚠️ Переменная окружения RAILWAY_URL не найдена! Установи её в настройках Railway.")
+
+    # Запуск FastAPI
     config = uvicorn.Config(
         app,
         host="0.0.0.0",
@@ -192,11 +179,7 @@ async def main():
         log_level="info"
     )
     server = uvicorn.Server(config)
-    runner2 = loop.create_task(server.serve())
-    await asyncio.gather(runner, runner2)
-
-async def bot_runner():
-    await dp.start_polling(bot)
+    await server.serve()
 
 if __name__ == "__main__":
     os.makedirs("templates_forwarder", exist_ok=True)
@@ -204,4 +187,3 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
-
