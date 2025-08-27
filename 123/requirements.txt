@@ -1,2 +1,7 @@
 flask
 setuptools
+aiogram>=3.0.0,<4.0.0
+fastapi
+uvicorn
+jinja2
+python-multipart
