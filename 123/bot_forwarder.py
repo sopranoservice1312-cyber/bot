@@ -181,16 +181,20 @@ async def debug_and_forward(message: types.Message):
                         to_send = f"{command} {text}"
                     else:
                         to_send = text
+                    # Пересылаем только в целевую
                     await bot.send_message(tgt, to_send)
                     log_forward(command, message.chat.id, text, tgt, "success")
+
+                    # ✅ В исходной отвечаем
                     await message.reply("✅ Переслано!", reply=False)
-                    await bot.send_message(tgt, "✅ Переслано!")
+
+                    # ↪️ Второе сообщение только в исходной при /add
                     if command == "/add":
-                        await bot.send_message(
-                            tgt,
+                        await message.reply(
                             """↪️Следующий этап пополнения : Слеш tron → и ссылка tronscan . 
                             Пример : ( /tron https://tronscan....) 
-                            ❗️ БУДЬТЕ ВНИМАТЕЛЬНЫ ❗️"""
+                            ❗️ БУДЬТЕ ВНИМАТЕЛЬНЫ ❗️""",
+                            reply=False
                         )
 
                 else:
@@ -231,6 +235,7 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
 
 
 
