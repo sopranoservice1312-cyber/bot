@@ -152,11 +152,11 @@ async def greet_and_show_id(message: types.Message):
         if member.id == me.id:
             await message.answer(
                 f"✅ Меня добавили в этот чат!\n"
-                f"ID чата: <code>{message.chat.id}</code>"
-                f"Я ваш личный помощник для исправления ошибок а так же пополнений ! Я работаю по следующим командам :"
-                f"/add→номер сипа→сумма (1 шаг)"
-                f"(Пример :  /add 12345 123)"
-                f"/tron→ccылка тронскан (2 шаг)"
+                f"ID чата: <code>{message.chat.id}</code>\n"
+                f"Я ваш личный помощник для исправления ошибок а так же пополнений ! Я работаю по следующим командам :\n"
+                f"/add→номер сипа→сумма (1 шаг)\n"
+                f"(Пример :  /add 12345 123)\n"
+                f"/tron→ccылка тронскан (2 шаг)\n"
                 f"/error→проблемные номера/ошибки для исправления"
             )
 
@@ -229,6 +229,7 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
 
 
 
