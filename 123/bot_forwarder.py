@@ -179,6 +179,13 @@ async def debug_and_forward(message: types.Message):
                     await bot.send_message(tgt, to_send)
                     log_forward(command, message.chat.id, text, tgt, "success")
                     await message.reply("✅ Переслано!", reply=False)
+                    if command == "/add":
+    await bot.send_message(
+        tgt,
+        """↪️Следующий этап пополнения : Слеш tron → и ссылка tronscan . 
+Пример : ( /tron https://tronscan....) 
+❗️ БУДЬТЕ ВНИМАТЕЛЬНЫ ❗️"""
+    )
                 else:
                     await message.reply("После команды должен быть текст!", reply=False)
             except Exception as e:
@@ -217,3 +224,4 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
