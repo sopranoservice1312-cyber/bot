@@ -148,27 +148,31 @@ async def send_custom_message(
 ):
     """
     Отправляет сообщение во все группы-источники для всех команд или выбранной.
+    Исключает дубликаты chat_id.
     """
     config = load_config()
     results = []
     errors = []
     sent_count = 0
+    sent_chat_ids = set()  # <--- для контроля дубликатов
 
     target_commands = [command] if command and command in config else config.keys()
     for cmd in target_commands:
         cdata = config[cmd]
         src_ids = cdata.get("source_chat_ids", [])
         for chat_id in src_ids:
+            if chat_id in sent_chat_ids:
+                continue  # пропускаем дубликат
             try:
                 await bot.send_message(chat_id, text)
                 log_forward("panel_send", "-", text, chat_id, "success")
                 sent_count += 1
                 results.append(f"Отправлено в {chat_id}")
+                sent_chat_ids.add(chat_id)
             except Exception as e:
                 errors.append(f"{chat_id}: {e}")
                 log_forward("panel_send", "-", text, chat_id, "fail", str(e))
     return JSONResponse({"ok": True, "sent": sent_count, "results": results, "errors": errors})
-
 # ------------------- Telegram Bot -------------------
 TOKEN = load_token()
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -265,6 +269,7 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
 
 
 
