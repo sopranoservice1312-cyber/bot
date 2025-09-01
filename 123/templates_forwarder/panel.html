@@ -216,6 +216,24 @@
             </table>
         </div>
     </div>
+    <form id="sendForm">
+  <textarea name="text" placeholder="Введите сообщение" required></textarea>
+  <button type="submit">Отправить</button>
+</form>
+<div id="result"></div>
+<script>
+document.getElementById('sendForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const text = e.target.text.value;
+  const response = await fetch('/send_message', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text})
+  });
+  const result = await response.json();
+  document.getElementById('result').innerText = JSON.stringify(result);
+};
+</script>
     <div class="block" style="text-align:center;">
         <b>Добавьте бота в нужные чаты, настройте для каждой команды чаты-источники (через запятую) и чат-назначение.<br>
         После этого команда <span class="mono">/add ...</span> (или любая другая) в группе-источнике будет отправляться в целевой чат с припиской <span class="mono">/add</span> (или другой командой).</b>
@@ -226,4 +244,5 @@
     </div>
 </div>
 </body>
+
 </html>
