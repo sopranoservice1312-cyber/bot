@@ -139,6 +139,36 @@ async def delete_command(command: str = Form(...)):
         save_config(cfg)
     return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
+from fastapi.responses import JSONResponse
+
+@app.post("/send_custom_message")
+async def send_custom_message(
+    text: str = Form(...),
+    command: str = Form(None)
+):
+    """
+    Отправляет сообщение во все группы-источники для всех команд или выбранной.
+    """
+    config = load_config()
+    results = []
+    errors = []
+    sent_count = 0
+
+    target_commands = [command] if command and command in config else config.keys()
+    for cmd in target_commands:
+        cdata = config[cmd]
+        src_ids = cdata.get("source_chat_ids", [])
+        for chat_id in src_ids:
+            try:
+                await bot.send_message(chat_id, text)
+                log_forward("panel_send", "-", text, chat_id, "success")
+                sent_count += 1
+                results.append(f"Отправлено в {chat_id}")
+            except Exception as e:
+                errors.append(f"{chat_id}: {e}")
+                log_forward("panel_send", "-", text, chat_id, "fail", str(e))
+    return JSONResponse({"ok": True, "sent": sent_count, "results": results, "errors": errors})
+
 # ------------------- Telegram Bot -------------------
 TOKEN = load_token()
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -235,6 +265,7 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
 
 
 
