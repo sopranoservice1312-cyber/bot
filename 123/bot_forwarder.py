@@ -220,7 +220,7 @@ async def debug_and_forward(message: types.Message):
                     log_forward(command, message.chat.id, text, tgt, "success")
 
                     # ✅ В исходной отвечаем
-                    await message.reply("✅ Переслано!", reply=False)
+                    await message.reply("✅ Отправлено!", reply=False)
 
                     # ↪️ Второе сообщение только в исходной при /add
                     if command == "/add":
@@ -269,6 +269,7 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
 
 
 
