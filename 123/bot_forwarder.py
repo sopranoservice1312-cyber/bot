@@ -44,7 +44,6 @@ import uvicorn
 # ------------------- Константы -------------------
 CONFIG_FILE = "forwarder_config.json"
 LOG_FILE = "forwarder_forward.log"
-BOT_TOKEN_FILE = "forwarder_bot_token.txt"
 PANEL_PORT = 8010  # fallback порт
 
 # ------------------- Конфиг -------------------
@@ -63,14 +62,10 @@ def save_config(cfg):
         json.dump(cfg, f, ensure_ascii=False, indent=2)
 
 def load_token():
-    if not os.path.exists(BOT_TOKEN_FILE):
-        with open(BOT_TOKEN_FILE, "w", encoding="utf-8") as f:
-            f.write("PASTE_YOUR_BOT_TOKEN_HERE")
-        print("❌ Вставьте токен Telegram-бота в файл forwarder_bot_token.txt и перезапустите!")
-        input("Нажмите Enter для выхода...")
-        exit(1)
-    with open(BOT_TOKEN_FILE, encoding="utf-8") as f:
-        return f.read().strip()
+    token = os.getenv("BOT_TOKEN")
+    if not token:
+        raise RuntimeError("❌ BOT_TOKEN не задан в переменных окружения Railway")
+    return token
 
 # ------------------- Логирование -------------------
 def log_forward(command, from_chat, text, to_chat, status, error=""):
@@ -269,6 +264,7 @@ if __name__ == "__main__":
         with open("templates_forwarder/panel.html", "w", encoding="utf-8") as f:
             f.write("<!-- Загрузите свежий шаблон! -->")
     asyncio.run(main())
+
 
 
 
