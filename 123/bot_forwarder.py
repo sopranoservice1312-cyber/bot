@@ -1,27 +1,20 @@
-import sys
 import subprocess
+import sys
 import os
-import pkg_resources
 
 # ------------------- Установка зависимостей -------------------
-REQUIRED_PACKAGES = {
-    "aiogram": ">=3.0.0,<4.0.0",
-    "fastapi": "",
-    "uvicorn": "",
-    "jinja2": "",
-    "python-multipart": ""
-}
-
-def ensure_package(package, version_spec):
-    try:
-        pkg_resources.require(f"{package}{version_spec}")
-    except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict):
-        print(f"Устанавливаю {package}{version_spec} ...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", f"{package}{version_spec}"])
+REQUIRED_PACKAGES = [
+    "aiogram>=3.0.0,<4.0.0",
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "python-multipart"
+]
 
 def ensure_all_packages():
-    for pkg, ver in REQUIRED_PACKAGES.items():
-        ensure_package(pkg, ver)
+    print("📦 Проверяю зависимости...")
+    for package in REQUIRED_PACKAGES:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 ensure_all_packages()
 print("✅ Все зависимости установлены. Запускаю бота...")
