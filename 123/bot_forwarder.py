@@ -90,8 +90,9 @@ async def panel(request: Request):
     cfg = load_config()
     logs = load_logs()
     return templates.TemplateResponse(
-        name="panel.html", 
-        context={"request": request, "config": cfg, "logs": logs}
+    name="panel.html",
+    context={"request": request, "config": cfg, "logs": logs},
+    request=request
     )
 
 @app.post("/set_chat")
