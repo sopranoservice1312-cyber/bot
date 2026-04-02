@@ -89,7 +89,10 @@ templates = Jinja2Templates(directory="templates_forwarder")
 async def panel(request: Request):
     cfg = load_config()
     logs = load_logs()
-    return templates.TemplateResponse("panel.html", {"request": request, "config": cfg, "logs": logs})
+    return templates.TemplateResponse(
+        name="panel.html", 
+        context={"request": request, "config": cfg, "logs": logs}
+    )
 
 @app.post("/set_chat")
 async def set_chat(
